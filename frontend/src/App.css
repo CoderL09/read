@@ -1,0 +1,124 @@
+.hero-bg {
+  background:
+    radial-gradient(circle at 62% 13%, rgba(215, 155, 121, 0.16), transparent 23rem),
+    linear-gradient(180deg, #050e14 0%, #081219 100%);
+}
+
+.grid-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(241, 234, 223, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(241, 234, 223, 0.035) 1px, transparent 1px);
+  background-size: 34px 34px;
+  opacity: 0.34;
+  pointer-events: none;
+}
+
+.reveal-up {
+  opacity: 0;
+  transform: translateY(28px);
+  animation: slideFade 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.delay-1 {
+  animation-delay: 0.14s;
+}
+
+.delay-2 {
+  animation-delay: 0.28s;
+}
+
+.delay-3 {
+  animation-delay: 0.42s;
+}
+
+.portal-image {
+  transform: scale(1.1);
+  animation: portalZoom 1.8s cubic-bezier(0.16, 1, 0.3, 1) 0.18s forwards;
+}
+
+.tilt-card {
+  transform-style: preserve-3d;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+  will-change: transform;
+}
+
+.tilt-card:hover {
+  border-color: rgba(215, 155, 121, 0.34);
+  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.38);
+}
+
+.tilt-lift {
+  transform: translateZ(28px);
+}
+
+.path-node {
+  opacity: 0;
+  transform: translateY(22px) scale(0.82);
+}
+
+.path-node.visible {
+  animation: nodePop 0.72s cubic-bezier(0.18, 1.45, 0.36, 1) forwards;
+  animation-delay: var(--node-delay, 0ms);
+}
+
+.map-lines path {
+  stroke-dasharray: 6 8;
+  animation: dashFlow 8s linear infinite;
+}
+
+.ring-progress {
+  stroke-dasharray: 326;
+  stroke-dashoffset: 326;
+  transition: stroke-dashoffset 1.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ring-progress.active {
+  stroke-dashoffset: 104.32;
+}
+
+@keyframes slideFade {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes portalZoom {
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes nodePop {
+  65% {
+    transform: translateY(-8px) scale(1.06);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dashFlow {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

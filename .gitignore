@@ -1,0 +1,28 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env
+*.log
+logs/
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dev artifacts
+.edge-*
+.chrome-*
+.agents
+server.stderr.log
+server.stdout.log
