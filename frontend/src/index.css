@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", Arial, sans-serif;
@@ -30,9 +30,85 @@ body {
   min-width: 320px;
   margin: 0;
   background: var(--color-slate-deep);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 button,
 a {
   font: inherit;
+}
+
+::selection {
+  color: #061016;
+  background: #efb15f;
+}
+
+@keyframes reveal-in {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float-orb {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(26px, -18px, 0) scale(1.12); }
+}
+
+@keyframes ember {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(249, 115, 22, .3)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 8px rgba(249, 115, 22, .8)); transform: scale(1.08); }
+}
+
+@keyframes quest-pulse {
+  0%, 100% { box-shadow: 0 0 0 7px rgba(238,157,70,.16), 0 0 24px rgba(229,139,72,.42); }
+  50% { box-shadow: 0 0 0 12px rgba(238,157,70,.08), 0 0 42px rgba(229,139,72,.78); }
+}
+
+@keyframes spine-breathe {
+  0%, 100% { box-shadow: inset -1px 0 rgba(255,255,255,.08), 0 0 8px rgba(239,177,95,.08); }
+  50% { box-shadow: inset -1px 0 rgba(255,255,255,.18), 5px 0 24px rgba(239,177,95,.48); }
+}
+
+.reveal-in { animation: reveal-in .75s cubic-bezier(.2,.8,.2,1) both; }
+.ambient-orb { animation: float-orb 8s ease-in-out infinite; }
+.interactive-card { transition: transform .35s cubic-bezier(.2,.8,.2,1), border-color .35s, background-color .35s, box-shadow .35s; }
+.interactive-card:hover { transform: translateY(-5px); border-color: rgba(239,177,95,.16); box-shadow: 0 24px 60px rgba(0,0,0,.22); }
+.book-card { animation: reveal-in .55s cubic-bezier(.2,.8,.2,1) both; }
+.quest-node { animation: reveal-in .55s cubic-bezier(.2,.8,.2,1) both; }
+.book-spine-glow { animation: spine-breathe 2.8s ease-in-out infinite; }
+.cinema-rail { overscroll-behavior-inline: contain; touch-action: pan-x; }
+
+.shimmer-button { position: relative; overflow: hidden; }
+.shimmer-button::after {
+  content: '';
+  position: absolute;
+  inset: -80% auto -80% -35%;
+  width: 24%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.72), transparent);
+  transform: rotate(18deg);
+  transition: left .65s ease;
+}
+.shimmer-button:hover::after { left: 115%; }
+
+.progress-shine > div { position: relative; overflow: hidden; }
+.progress-shine > div::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+  transform: translateX(-100%);
+  animation: progress-shimmer 2.4s ease-in-out infinite;
+}
+
+@keyframes progress-shimmer {
+  60%, 100% { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }
