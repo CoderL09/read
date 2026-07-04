@@ -45,13 +45,13 @@ export default function Dashboard() {
 
   return (
     <main className="overflow-hidden">
-      <section className="relative isolate min-h-[690px] overflow-hidden border-b border-white/[.06]">
+      <section className="home-hero relative isolate min-h-[690px] overflow-hidden border-b border-white/[.06]">
         <img className="absolute inset-0 h-full w-full object-cover object-[68%_center]" src="/assets/readquest-hero-v2.webp" alt="A magical book opening a path toward a crystal mountain" />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,#070b0d_0%,rgba(7,11,13,.94)_34%,rgba(7,11,13,.22)_72%,rgba(7,11,13,.35)_100%)]" />
         <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#070b0d] to-transparent" />
         <div className="ambient-orb absolute left-[44%] top-28 h-40 w-40 rounded-full bg-purple-500/10 blur-3xl" />
 
-        <div className="relative mx-auto flex min-h-[690px] max-w-[1320px] items-center px-5 py-20 sm:px-8">
+        <div className="relative mx-auto flex min-h-[690px] max-w-[1320px] items-center px-5 py-16 sm:px-8 sm:py-20">
           <div className="reveal-in min-w-0 max-w-[650px]">
             <p className="inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[.07] px-3 py-2 text-[10px] font-bold uppercase tracking-[.22em] text-emerald-300">
               <Sparkles size={13} /> AI-powered reading RPG
@@ -77,9 +77,8 @@ export default function Dashboard() {
               ))}
             </dl>
           </div>
-          <div className="pointer-events-auto absolute bottom-2 right-4 z-10 hidden w-[290px] lg:block xl:right-12 xl:w-[340px]">
+          <div className="pointer-events-auto absolute right-[7%] top-[44%] z-10 hidden w-[300px] -translate-y-1/2 lg:block xl:right-[9%] xl:w-[360px] 2xl:right-[7%] 2xl:w-[390px]">
             <InteractiveCompanion companionId={selectedCompanion} stage={evolutionStage} className="aspect-square w-full" />
-            <div className="absolute bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap"><EvolutionBadge stage={evolutionStage} /></div>
           </div>
         </div>
       </section>

@@ -4,6 +4,9 @@ import { z } from "zod";
 import mongoose from "mongoose";
 import { SenseChunk } from "../models/SenseChunk.js";
 import type { ISentenceChunk } from "../models/SenseChunk.js";
+import { normalizeRhythmChunks, parseLocalSenseGroups } from "./local-sense-chunk.js";
+
+const SENSE_CHUNK_STANDARD_VERSION = 2;
 
 const SenseGroupSchema = z.object({
   originalSentence: z
@@ -38,21 +41,26 @@ function buildModel(): ChatOpenAI {
 }
 
 const senseGroupPrompt = PromptTemplate.fromTemplate(`
-You are a senior IELTS reading tutor and cognitive linguist specialising in English sense-group chunking.
+You design natural English reading rhythm for language learners.
 
-Your task: parse the passage below sentence by sentence.  For each sentence, split it into natural **sense groups** — the smallest meaningful, breath-group units that a fluent reader would mentally pause at.
+Your task: split each sentence into the larger meaning units a native speaker naturally hears and understands while reading. Meaning and rhythm come first. This is NOT grammar-tree parsing.
 
 **Chunking rules (strict)**:
 
-1. **Subject phrase boundaries** — "The old master / walked slowly" (split after the full subject NP).
-2. **Verb phrase boundaries** — "walked slowly / into the deep forest" (split after the full VP before a PP).
-3. **Prepositional phrases** — start a new chunk at each prepositional phrase: "in the early morning", "into the deep forest", "with great patience".
-4. **Clause markers** — split before "who", "which", "that" (relative), "because", "although", "when", "while", "if", "where", "before", "after", "since", "unless", "until".
-5. **Non-finite verb phrases** — split before participial phrases: "..., / standing quietly", "..., / lost in thought".  Split before infinitives used as adverbials: "... / to find his way".
-6. **Conjunctions** — split before "and", "but", "or", "nor", "yet", "so" when joining independent clauses.
-7. **Do NOT split** single short words (articles, short prepositions, pronouns) into their own chunks.  Attach them to the phrase they modify: "in the forest" stays as one chunk, not "in / the / forest".
-8. **Fluency check** — almost every chunk should feel like a natural "breath group" with 2-7 words.  If a chunk is only 1 word, merge it with the adjacent chunk unless it is a clause marker.
-9. **Reconstruction test** — joining all chunks in order with a single space between them MUST exactly reconstruct the original sentence.
+1. Every chunk can be spoken naturally in one breath and carries one complete piece of meaning.
+2. Keep phrasal verbs together: "looked out of", "gave up", "turned away from".
+3. Keep a verb with its object or complement whenever they form one idea: "opened the old wooden door".
+4. Keep fixed expressions and collocations together.
+5. Keep an entire relative clause together. You may place the whole clause in a new chunk, but never split inside it merely because it contains prepositions or verbs.
+6. Keep each prepositional phrase intact. Do not automatically make every prepositional phrase a new chunk; split only when a real spoken pause or meaning shift occurs.
+7. Never isolate articles, pronouns, auxiliaries, conjunctions, particles, or short prepositions.
+8. Prefer fewer, richer chunks. Do not chase a word-count target and do not split just to expose grammar.
+9. Joining chunks in order with one space MUST exactly reconstruct the original sentence.
+
+Target pattern:
+"The old man / looked out of the window / without saying a word."
+Never output:
+"The old man / looked / out of / the window / without / saying / a word."
 
 Passage:
 ---
@@ -69,17 +77,10 @@ export async function parseSenseGroups(
   const trimmed = stageContent.slice(0, 5000);
   const output: ChunksOutput = await chain.invoke({ stageContent: trimmed });
 
-  for (const sentence of output.sentences) {
-    const reconstructed = sentence.chunks.join(" ");
-    const original = sentence.originalSentence.replace(/\s+/g, " ").trim();
-    if (reconstructed !== original) {
-      console.warn(
-        `[chunks] Reconstruction mismatch: "${original}" vs "${reconstructed}"`,
-      );
-    }
-  }
-
-  return output.sentences;
+  return output.sentences.map((sentence) => ({
+    ...sentence,
+    chunks: normalizeRhythmChunks(sentence.originalSentence, sentence.chunks),
+  }));
 }
 
 export async function getOrCreateChunks(
@@ -89,13 +90,23 @@ export async function getOrCreateChunks(
   const objectId = new mongoose.Types.ObjectId(stageId);
 
   const cached = await SenseChunk.findOne({ stageId: objectId });
-  if (cached) {
+  if (cached?.standardVersion === SENSE_CHUNK_STANDARD_VERSION) {
     return cached.sentences;
   }
 
-  const sentences = await parseSenseGroups(stageContent);
+  let sentences: ISentenceChunk[];
+  try {
+    sentences = await parseSenseGroups(stageContent);
+  } catch (error) {
+    console.warn("[chunks] AI rhythm parsing unavailable; using local rhythm parser", error);
+    sentences = parseLocalSenseGroups(stageContent);
+  }
 
-  await SenseChunk.create({ stageId: objectId, sentences });
+  await SenseChunk.findOneAndUpdate(
+    { stageId: objectId },
+    { standardVersion: SENSE_CHUNK_STANDARD_VERSION, sentences },
+    { upsert: true, new: true },
+  );
 
   return sentences;
 }

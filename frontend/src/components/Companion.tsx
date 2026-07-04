@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from 'framer-motion'
 import { Check, Sparkles, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react'
 import type { Book } from '../lib/api'
 
 export type CompanionId = 'xiaohe' | 'ember' | 'sprig'
@@ -12,7 +12,7 @@ export const companions = [
     name: '小禾',
     title: '黄色河马',
     personality: '温柔又有耐心，喜欢陪你慢慢读。',
-    image: '/assets/companions/xiaohe.webp',
+    image: '/assets/companions/xiaohe-v2.webp',
     accent: '#f5c451',
   },
   {
@@ -119,11 +119,13 @@ export function CompanionAvatar({
   stage,
   className = '',
   showEvolution = true,
+  children,
 }: {
   companionId: CompanionId
   stage: EvolutionStage
   className?: string
   showEvolution?: boolean
+  children?: ReactNode
 }) {
   const reducedMotion = useReducedMotion()
   const companion = companions.find((item) => item.id === companionId) ?? companions[0]
@@ -131,6 +133,13 @@ export function CompanionAvatar({
 
   return (
     <div className={`relative grid place-items-center ${className}`}>
+      <motion.div
+        className="companion-platform"
+        style={{ '--companion-accent': companion.accent } as CSSProperties}
+        animate={reducedMotion ? undefined : { scale: [0.94, 1.04, 0.94], opacity: [0.52, 0.82, 0.52] }}
+        transition={{ duration: 3.8, repeat: Infinity, ease: 'easeInOut' }}
+        aria-hidden="true"
+      />
       <motion.div
         className="absolute inset-[17%] rounded-full blur-2xl"
         style={{ backgroundColor: companion.accent }}
@@ -155,11 +164,12 @@ export function CompanionAvatar({
         transition={{ duration: reducedMotion ? 0.15 : 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
         <motion.div
-          className="h-full w-full origin-bottom"
+          className="relative h-full w-full origin-bottom"
           animate={reducedMotion ? undefined : { y: [0, -8, 0, -3, 0], rotate: [0, -1.2, 0, 1.2, 0], scaleY: [1, 1.015, 1, 0.965, 1], scaleX: [1, 0.992, 1, 1.018, 1] }}
           transition={{ duration: 4.6, repeat: Infinity, repeatDelay: 0.4, ease: 'easeInOut' }}
         >
           <img className="h-full w-full object-contain drop-shadow-[0_24px_35px_rgba(0,0,0,.38)]" src={companion.image} alt={`${companion.name}, ${stageLabels[stage].label}`} />
+          {children}
         </motion.div>
       </motion.div>
 
@@ -211,9 +221,9 @@ export function EvolutionBadge({ stage }: { stage: EvolutionStage }) {
 type Reaction = 'idle' | 'shy' | 'tantrum' | 'dizzy' | 'fallen'
 
 const eyeProfiles: Record<CompanionId, { eyes: [number, number]; top: number; paw: string }> = {
-  xiaohe: { eyes: [45, 60], top: 62, paw: '#efad2d' },
-  ember: { eyes: [47, 61], top: 60, paw: '#e96622' },
-  sprig: { eyes: [47, 62.5], top: 62, paw: '#91ad5f' },
+  xiaohe: { eyes: [42, 63.5], top: 33.5, paw: '#efad2d' },
+  ember: { eyes: [42.5, 58.5], top: 30.5, paw: '#e96622' },
+  sprig: { eyes: [42.5, 59], top: 31, paw: '#91ad5f' },
 }
 
 const userAttributes = [
@@ -391,44 +401,41 @@ export function InteractiveCompanion({
         animate={reducedMotion ? undefined : reactionAnimation}
         transition={reaction === 'fallen' ? { type: 'spring', stiffness: 160, damping: 13 } : { duration: reaction === 'idle' ? 0.35 : 0.65, ease: 'easeInOut' }}
       >
-        <CompanionAvatar companionId={companionId} stage={stage} className="h-full w-full" showEvolution={false} />
+        <CompanionAvatar companionId={companionId} stage={stage} className="h-full w-full" showEvolution={false}>
+          {profile.eyes.map((left, index) => (
+            <motion.span
+              className="pointer-events-none absolute aspect-square w-[4.2%] rounded-full bg-[radial-gradient(circle_at_65%_28%,white_0_8%,#1a140d_10%_58%,#030303_60%)] shadow-[0_0_4px_rgba(255,255,255,.22)]"
+              style={{ left: `${left}%`, top: `${profile.top}%`, x: gazeX, y: gazeY }}
+              aria-hidden="true"
+              key={index}
+            />
+          ))}
 
-        {profile.eyes.map((left, index) => (
-          <motion.span
-            className="pointer-events-none absolute aspect-square w-[4.2%] rounded-full bg-[radial-gradient(circle_at_65%_28%,white_0_8%,#1a140d_10%_58%,#030303_60%)] shadow-[0_0_4px_rgba(255,255,255,.22)]"
-            style={{ left: `${left}%`, top: `${profile.top}%`, x: gazeX, y: gazeY }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: reducedMotion ? 0 : 0.55, duration: 0.2 }}
-            aria-hidden="true"
-            key={index}
-          />
-        ))}
+          <AnimatePresence>
+            {reaction === 'shy' && (
+              <motion.div className="pointer-events-none absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                {profile.eyes.map((left, index) => (
+                  <motion.i
+                    className="absolute h-[13%] w-[10%] rounded-[50%_50%_45%_45%] border border-black/10"
+                    style={{ left: `${left - 2}%`, top: `${profile.top + 15}%`, backgroundColor: profile.paw, transformOrigin: '50% 100%' }}
+                    initial={{ y: 24, rotate: index ? 24 : -24 }}
+                    animate={{ y: -30, rotate: index ? -12 : 12 }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+                    key={index}
+                  />
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        <AnimatePresence>
-          {reaction === 'shy' && (
-            <motion.div className="pointer-events-none absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              {profile.eyes.map((left, index) => (
-                <motion.i
-                  className="absolute h-[13%] w-[10%] rounded-[50%_50%_45%_45%] border border-black/10"
-                  style={{ left: `${left - 2}%`, top: `${profile.top + 15}%`, backgroundColor: profile.paw, transformOrigin: '50% 100%' }}
-                  initial={{ y: 24, rotate: index ? 24 : -24 }}
-                  animate={{ y: -30, rotate: index ? -12 : 12 }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-                  key={index}
-                />
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {reaction === 'dizzy' && (
-            <motion.div className="pointer-events-none absolute inset-x-[25%] top-[16%] h-[22%]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              {['✦', '★', '✧'].map((star, index) => <motion.span className="absolute text-xl text-amber-200" style={{ left: `${index * 38}%` }} animate={{ y: [0, -12, 0], rotate: [0, 180, 360] }} transition={{ duration: 0.7 + index * 0.15, repeat: Infinity }} key={star}>{star}</motion.span>)}
-            </motion.div>
-          )}
-        </AnimatePresence>
+          <AnimatePresence>
+            {reaction === 'dizzy' && (
+              <motion.div className="pointer-events-none absolute inset-x-[25%] top-[16%] h-[22%]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                {['✦', '★', '✧'].map((star, index) => <motion.span className="absolute text-xl text-amber-200" style={{ left: `${index * 38}%` }} animate={{ y: [0, -12, 0], rotate: [0, 180, 360] }} transition={{ duration: 0.7 + index * 0.15, repeat: Infinity }} key={star}>{star}</motion.span>)}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </CompanionAvatar>
       </motion.div>
 
       <AnimatePresence>

@@ -1,4 +1,5 @@
-import AdmZip from "adm-zip";
+import AdmZip, { type IZipEntry } from "adm-zip";
+import { XMLParser } from "fast-xml-parser";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -36,9 +37,11 @@ function readEpubFile(filePath: string): string {
     throw new Error("No HTML/XHTML content found in EPUB — file may be corrupted");
   }
 
-  htmlEntries.sort((a, b) => a.entryName.localeCompare(b.entryName));
+  // The OPF spine defines reading order. Sorting ZIP paths alphabetically can
+  // silently scramble books whose chapter files are not zero-padded.
+  const orderedEntries = getEpubSpineEntries(zip) ?? htmlEntries;
 
-  return htmlEntries
+  return orderedEntries
     .map((entry) => {
       const html = entry.getData().toString("utf-8");
       return stripHtml(html);
@@ -48,10 +51,71 @@ function readEpubFile(filePath: string): string {
     .trim();
 }
 
+function getEpubSpineEntries(zip: AdmZip): IZipEntry[] | null {
+  try {
+    const entries = zip.getEntries();
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      removeNSPrefix: true,
+      attributeNamePrefix: "@_",
+      isArray: (name) => ["item", "itemref", "reference", "rootfile"].includes(name),
+    });
+
+    const container = entries.find((entry) => entry.entryName === "META-INF/container.xml");
+    if (!container) return null;
+
+    const containerData = parser.parse(container.getData().toString("utf-8"));
+    const rootfile = containerData?.container?.rootfiles?.rootfile?.[0];
+    const opfPath = rootfile?.["@_full-path"];
+    if (!opfPath) return null;
+
+    const opfEntry = entries.find((entry) => entry.entryName === opfPath);
+    if (!opfEntry) return null;
+
+    const opf = parser.parse(opfEntry.getData().toString("utf-8"))?.package;
+    const manifestItems: any[] = opf?.manifest?.item ?? [];
+    const spineItems: any[] = opf?.spine?.itemref ?? [];
+    if (manifestItems.length === 0 || spineItems.length === 0) return null;
+
+    const excludedHrefs = new Set<string>();
+    const guideReferences: any[] = opf?.guide?.reference ?? [];
+    for (const reference of guideReferences) {
+      if (["toc", "cover"].includes(String(reference?.["@_type"] ?? "").toLowerCase())) {
+        excludedHrefs.add(String(reference?.["@_href"] ?? "").split("#")[0]);
+      }
+    }
+
+    const opfDir = path.posix.dirname(opfPath);
+    const manifestById = new Map(manifestItems.map((item) => [item?.["@_id"], item]));
+    const ordered = spineItems.flatMap((spineItem) => {
+      const item = manifestById.get(spineItem?.["@_idref"]);
+      const href = String(item?.["@_href"] ?? "").split("#")[0];
+      const properties = String(item?.["@_properties"] ?? "").split(/\s+/);
+      const mediaType = String(item?.["@_media-type"] ?? "");
+
+      if (!href || !mediaType.includes("html") || properties.includes("nav") || excludedHrefs.has(href)) {
+        return [];
+      }
+
+      const entryName = path.posix.normalize(opfDir === "." ? href : `${opfDir}/${href}`);
+      const entry = entries.find((candidate) => candidate.entryName === entryName);
+      return entry ? [entry] : [];
+    });
+
+    return ordered.length > 0 ? ordered : null;
+  } catch (error) {
+    console.warn("[epub] Could not read OPF spine; using archive order:", error);
+    return null;
+  }
+}
+
 function stripHtml(html: string): string {
-  return html
+  let text = html
+    .replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, "")
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/(?:p|div|section|article|aside|header|footer|h[1-6]|li|blockquote|tr)>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
@@ -59,9 +123,17 @@ function stripHtml(html: string): string {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#x27;/g, "'")
+    .replace(/&#x([\da-f]+);/gi, (_match, code: string) => String.fromCodePoint(Number.parseInt(code, 16)))
     .replace(/&#(\d+);/g, (_match, code: string) => String.fromCodePoint(Number(code)))
-    .replace(/\s+/g, " ")
+    .replace(/[^\S\r\n]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+  // Remove standalone page numbers (common EPUB artifact: "<p class='pagenum'>42</p>" → "42")
+  text = text.replace(/^\d{1,4}$/gm, "").replace(/\n{3,}/g, "\n\n").trim();
+
+  return text;
 }
 
 const READERS: Record<string, (filePath: string) => string | Promise<string>> = {

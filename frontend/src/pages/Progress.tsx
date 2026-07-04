@@ -18,13 +18,13 @@ const activity = [
 
 function ProgressOverview() {
   return (
-    <section className="grid items-center gap-10 py-14 min-[560px]:grid-cols-[.72fr_.8fr_1fr] md:gap-8 lg:py-20">
+    <section className="grid items-center gap-10 py-14 sm:grid-cols-2 md:gap-8 lg:grid-cols-[.72fr_.8fr_1fr] lg:py-20">
       <header><p className="text-[10px] font-bold uppercase tracking-[.24em] text-purple-300">Character sheet</p><h1 className="mt-4 font-serif text-6xl leading-[.9] text-cream lg:text-7xl">Your<br />Progress</h1><p className="mt-6 max-w-60 text-sm leading-7 text-cream/45">See the reader you&apos;re becoming, one quest at a time.</p></header>
       <div className="relative mx-auto h-52 w-52 lg:h-64 lg:w-64" aria-label="68 percent overall progress">
         <svg viewBox="0 0 220 220" className="h-full w-full -rotate-90" role="img"><circle cx="110" cy="110" r="91" fill="none" stroke="rgba(241,234,223,.08)" strokeWidth="13" /><circle cx="110" cy="110" r="91" fill="none" stroke="#e58b48" strokeWidth="13" strokeLinecap="round" strokeDasharray="571.8" strokeDashoffset="183" /></svg>
         <div className="absolute inset-0 grid place-items-center text-center"><div><strong className="font-serif text-5xl text-amber-300 lg:text-6xl">68%</strong><span className="mt-2 block text-[10px] uppercase tracking-wider text-cream/35">Overall mastery</span></div></div>
       </div>
-      <dl className="divide-y divide-white/[.07]">{stats.map(({ label, value, icon: Icon }) => <div className="grid grid-cols-[40px_1fr_auto] items-center gap-4 py-4" key={label}><dt className="grid h-10 w-10 place-items-center rounded-xl border border-white/[.06] bg-white/[.03] text-amber-300"><Icon size={18} /></dt><dd className="text-xs text-cream/45">{label}</dd><dd className="font-semibold text-cream">{value}</dd></div>)}</dl>
+      <dl className="divide-y divide-white/[.07] sm:col-span-2 lg:col-span-1">{stats.map(({ label, value, icon: Icon }) => <div className="grid grid-cols-[40px_1fr_auto] items-center gap-4 py-4" key={label}><dt className="grid h-10 w-10 place-items-center rounded-xl border border-white/[.06] bg-white/[.03] text-amber-300"><Icon size={18} /></dt><dd className="text-xs text-cream/45">{label}</dd><dd className="font-semibold text-cream">{value}</dd></div>)}</dl>
     </section>
   )
 }
@@ -41,4 +41,3 @@ function RecentActivity() {
 export default function Progress() {
   return <main className="min-h-screen bg-[#0a0f11] text-cream"><div className="mx-auto max-w-[1180px] px-4 pb-16 sm:px-7"><ProgressOverview /><div className="space-y-7"><LearningStats /><RecentActivity /></div></div></main>
 }
-

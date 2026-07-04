@@ -7,6 +7,8 @@ const Library = lazy(() => import('./pages/Library'))
 const Path = lazy(() => import('./pages/Path'))
 const Progress = lazy(() => import('./pages/Progress'))
 const Upload = lazy(() => import('./pages/Upload'))
+const Reader = lazy(() => import('./pages/Reader'))
+const ReadingDetailPage = lazy(() => import('./pages/read-v2'))
 
 function RouteFallback() {
   return (
@@ -29,6 +31,8 @@ export default function App() {
           <Route path="/path" element={<Suspense fallback={<RouteFallback />}><Path /></Suspense>} />
           <Route path="/progress" element={<Suspense fallback={<RouteFallback />}><Progress /></Suspense>} />
           <Route path="/upload" element={<Suspense fallback={<RouteFallback />}><Upload /></Suspense>} />
+          <Route path="/read/:stageId" element={<Suspense fallback={<RouteFallback />}><Reader /></Suspense>} />
+          <Route path="/reader/:stageId" element={<Suspense fallback={<RouteFallback />}><ReadingDetailPage /></Suspense>} />
         </Route>
       </Routes>
     </BrowserRouter>

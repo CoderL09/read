@@ -18,4 +18,5 @@ export type Book = {
   progress: number
   wordCount: number
   totalChapters: number
+  readingMode?: 'quest' | 'continuous'
 }

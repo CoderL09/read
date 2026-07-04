@@ -16,7 +16,7 @@ import {
 } from 'recharts'
 import type { TooltipContentProps } from 'recharts'
 
-export const xpActivityData = [
+const xpActivityData = [
   { day: 'Mon', xp: 180 },
   { day: 'Tue', xp: 320 },
   { day: 'Wed', xp: 260 },
@@ -26,7 +26,7 @@ export const xpActivityData = [
   { day: 'Sun', xp: 540 },
 ]
 
-export const heroAttributesData = [
+const heroAttributesData = [
   { attribute: 'Vocabulary', value: 86, fullMark: 100 },
   { attribute: 'Grammar', value: 72, fullMark: 100 },
   { attribute: 'Reading Speed', value: 78, fullMark: 100 },

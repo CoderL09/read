@@ -13,6 +13,7 @@ export interface IBook extends Document {
   wordCount: number;
   totalChapters: number;
   coverUrl: string;
+  readingMode: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +34,7 @@ const BookSchema = new Schema<IBook>(
     wordCount: { type: Number, default: 0 },
     totalChapters: { type: Number, default: 0 },
     coverUrl: { type: String, default: "" },
+    readingMode: { type: String, default: "" },
   },
   { timestamps: true },
 );

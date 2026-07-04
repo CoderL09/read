@@ -10,6 +10,7 @@ import {
   LockKeyhole,
   Search,
   Sparkles,
+  Target,
   Upload as UploadIcon,
   WandSparkles,
   X,
@@ -292,6 +293,8 @@ function ReviewModal({
   genStatus,
   genProgress,
   onNavigate,
+  wordsPerQuest,
+  onPacingChange,
 }: {
   result: UploadResult
   onClose: () => void
@@ -299,6 +302,8 @@ function ReviewModal({
   genStatus: GenStatus
   genProgress: number
   onNavigate: () => void
+  wordsPerQuest: number
+  onPacingChange: (value: number) => void
 }) {
   const size = `${(result.file.size / 1024 / 1024).toFixed(2)} MB`
   const isBusy = genStatus === 'starting' || genStatus === 'polling'
@@ -352,6 +357,33 @@ function ReviewModal({
                   <dd>{result.book.totalChapters || '—'}</dd>
                 </dl>
                 <div className="mt-5 rounded-lg border border-white/[.07] p-4">
+                  <h3 className="flex items-center gap-2 text-xs text-cream">
+                    <Target size={14} className="text-orange-500" /> Set your reading pace
+                  </h3>
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    {([
+                      { label: 'Easy', words: 500, desc: 'short reads' },
+                      { label: 'Standard', words: 1000, desc: 'balanced' },
+                      { label: 'Challenge', words: 2000, desc: 'deep dives' },
+                    ]).map(({ label, words, desc }) => (
+                      <button
+                        key={label}
+                        className={`rounded-lg border px-3 py-2.5 text-center transition ${
+                          wordsPerQuest === words
+                            ? 'border-orange-400/50 bg-orange-500/10 text-orange-300'
+                            : 'border-white/[.07] text-cream/45 hover:border-white/15 hover:text-cream/70'
+                        }`}
+                        type="button"
+                        onClick={() => onPacingChange(words)}
+                      >
+                        <span className="block font-serif text-sm">{label}</span>
+                        <span className="mt-0.5 block text-[9px] opacity-60">{words}w · {desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-3 rounded-lg border border-white/[.07] p-4">
                   <h3 className="flex items-center gap-2 text-xs text-cream">
                     <Sparkles size={14} className="text-orange-500" /> What happens next?
                   </h3>
@@ -451,6 +483,7 @@ export default function Upload() {
   const [genStatus, setGenStatus] = useState<GenStatus>('idle')
   const [genProgress, setGenProgress] = useState(0)
   const [duplicateBook, setDuplicateBook] = useState<UploadedBook | null>(null)
+  const [wordsPerQuest, setWordsPerQuest] = useState(500)
 
   useEffect(() => () => {
     setGenStatus('idle')
@@ -499,7 +532,7 @@ export default function Upload() {
     setGenProgress(0)
 
     try {
-      await api.post(`/books/${result.book.id}/generate`)
+      await api.post(`/books/${result.book.id}/generate`, { wordsPerQuest })
     } catch (caught) {
       setGenStatus('failed')
       setError(
@@ -554,7 +587,7 @@ export default function Upload() {
     <main className="min-h-screen bg-[#080d0f] text-cream">
       <div className="mx-auto max-w-[1180px]">
         <div className="px-4 py-10 sm:px-7">
-          <div className="grid gap-6 min-[520px]:grid-cols-[minmax(0,1.7fr)_minmax(180px,1fr)] min-[520px]:gap-4 lg:gap-6">
+          <div className="grid gap-6 md:grid-cols-[minmax(0,1.7fr)_minmax(220px,1fr)] md:gap-4 lg:gap-6">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[.12em] text-orange-500">Upload a book</p>
               <h1 className="mt-5 max-w-xl font-serif text-5xl leading-[.95] text-cream sm:text-6xl">Every book holds<br />a quest.</h1>
@@ -600,6 +633,8 @@ export default function Upload() {
           genStatus={genStatus}
           genProgress={genProgress}
           onNavigate={() => navigate('/path')}
+          wordsPerQuest={wordsPerQuest}
+          onPacingChange={setWordsPerQuest}
         />
       )}
     </main>

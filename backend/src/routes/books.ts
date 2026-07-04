@@ -197,6 +197,7 @@ async function deleteFileSilently(filePath: string): Promise<void> {
 booksRouter.post("/books/:bookId/generate", async (req, res) => {
   try {
     const { bookId } = req.params;
+    const { wordsPerQuest, mode } = (req.body as { wordsPerQuest?: number; mode?: string }) ?? {};
 
     if (!mongoose.Types.ObjectId.isValid(bookId)) {
       res.status(400).json({ error: "Invalid bookId format" });
@@ -217,14 +218,20 @@ booksRouter.post("/books/:bookId/generate", async (req, res) => {
       return;
     }
 
+    const wpg = typeof wordsPerQuest === "number" && wordsPerQuest >= 200 && wordsPerQuest <= 5000
+      ? wordsPerQuest
+      : undefined;
+
+    const genMode: "quest" | "continuous" = mode === "continuous" ? "continuous" : "quest";
+
     book.status = "processing";
     book.progress = 0;
     book.errorMessage = undefined as any;
     await book.save();
 
-    res.json({ success: true, message: "Generation started — check /status for progress" });
+    res.json({ success: true, message: `Generation started (${genMode} mode) — check /status for progress` });
 
-    runGenerationPipeline(bookId).catch((err) => {
+    runGenerationPipeline(bookId, wpg, genMode).catch((err) => {
       console.error(`[route] Background pipeline ${bookId} crashed:`, err);
     });
   } catch (error) {
@@ -279,7 +286,7 @@ booksRouter.get("/books/:bookId/chapters", async (req, res) => {
 
     const chapters = await Stage.find({ bookId })
       .sort({ chapterIndex: 1 })
-      .select("chapterIndex content");
+      .select("chapterIndex content stageTitle stageSummary");
 
     res.json({
       book: {
@@ -289,11 +296,14 @@ booksRouter.get("/books/:bookId/chapters", async (req, res) => {
         totalChapters: book.totalChapters,
         wordCount: book.wordCount,
         coverUrl: book.coverUrl,
+        readingMode: book.readingMode ?? "quest",
       },
       chapters: chapters.map((ch) => ({
         id: (ch._id as mongoose.Types.ObjectId).toString(),
         chapterIndex: ch.chapterIndex,
         content: ch.content,
+        stageTitle: ch.stageTitle ?? "",
+        stageSummary: ch.stageSummary ?? "",
       })),
     });
   } catch (error) {

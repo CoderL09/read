@@ -7,6 +7,7 @@ export interface ISentenceChunk {
 
 export interface ISenseChunk extends Document {
   stageId: mongoose.Types.ObjectId;
+  standardVersion: number;
   sentences: ISentenceChunk[];
   createdAt: Date;
   updatedAt: Date;
@@ -23,6 +24,7 @@ const SentenceChunkSubSchema = new Schema<ISentenceChunk>(
 const SenseChunkSchema = new Schema<ISenseChunk>(
   {
     stageId: { type: Schema.Types.ObjectId, ref: "Stage", required: true, unique: true, index: true },
+    standardVersion: { type: Number, required: true, default: 2 },
     sentences: { type: [SentenceChunkSubSchema], required: true },
   },
   { timestamps: true },

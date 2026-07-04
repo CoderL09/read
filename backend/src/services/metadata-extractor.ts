@@ -181,7 +181,7 @@ function extractTxtMeta(filePath: string): Pick<BookMeta, "wordCount" | "totalCh
 
   const chapterPatterns = [
     /(?:^|\n)\s*(?:Chapter|CHAPTER|Ch\.)\s+(\d+|[IVXLCDM]+)/gm,
-    /(?:^|\n)\s*第\s*(\d+|[一二三四五六七八九十百千万]+)\s*章/gm,
+    /(?:^|\n)\s*第\s*(\d+|[零〇一二三四五六七八九十百千万两壹贰叁肆伍陆柒捌玖拾]+)\s*[章节回卷部篇]/gm,
     /(?:^|\n)\s*(?:Part|PART|Book|BOOK)\s+(\d+|[IVXLCDM]+)/gm,
   ];
 
